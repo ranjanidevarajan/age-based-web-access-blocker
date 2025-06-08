@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Age-Based Access Control</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background-color: #f3f3f3;
+    }
+    video {
+      border: 3px solid #333;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #1e90ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0d6efd;
+    }
+    #message {
+      margin-top: 15px;
+      font-size: 18px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🔒 Age Verification System</h2>
+  <video id="video" width="320" height="240" autoplay></video><br>
+  <button onclick="captureAndVerify()">Verify Age</button>
+  <div id="message"></div>
+
+  <script>
+    const video = document.getElementById("video");
+    const messageDiv = document.getElementById("message");
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("❌ Could not access webcam.");
+      });
+
+    function captureAndVerify() {
+      messageDiv.textContent = "📷 Capturing image...";
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL("image/jpeg");
+
+      fetch("http://127.0.0.1:5000/verify-age", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: imageData }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "success") {
+          const age = data.age;
+          if (age < 18) {
+            messageDiv.textContent = "❌ Access Denied: Detected age is " + age;
+            alert("Access denied. You are under 18.");
+            window.location.href = "https://www.google.com";
+          } else {
+            messageDiv.textContent = "✅ Access Granted: Detected age is " + age;
+            alert("Welcome! Age verified successfully.");
+          }
+        } else if (data.status === "no_face") {
+          messageDiv.textContent = "❌ Face not clear or not visible. Please try again.";
+          alert("Face not clear. Please ensure your face is visible and try again.");
+        } else {
+          messageDiv.textContent = "❌ Error verifying age.";
+          alert("Something went wrong. Please try again.");
+        }
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        messageDiv.textContent = "❌ Server error.";
+        alert("Server error. Could not verify age.");
+      });
+    }
+  </script>
+</body>
+</html>
