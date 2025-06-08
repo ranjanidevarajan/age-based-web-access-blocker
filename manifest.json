@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Age-Based Web Access Blocker",
+  "version": "1.0",
+  "description": "Blocks 18+ or sensitive websites for users under 18 by detecting age from webcam.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_title": "Age Blocker"
+  }
+}
